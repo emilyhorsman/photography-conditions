@@ -1,5 +1,6 @@
-import os
 import getpass
+import iso8601
+import os
 import requests
 
 authorization_path = os.path.expanduser('~/.photographyconditions')
@@ -38,12 +39,19 @@ prediction_response = requests.get(
     params=dict(geo='43.2740851,-79.8994183'),
     headers={'Authorization': authorization}
 )
-prediction_data = prediction_response.json()
-sunset_prediction = next(filter(
-    lambda f: f['properties']['type'] == 'Sunset',
-    prediction_data['features']
-))
-print('Quality Prediction: {} ({}%)'.format(
-    sunset_prediction['properties']['quality'],
-    sunset_prediction['properties']['quality_percent'])
-)
+
+def print_prediction(prediction_data):
+    if prediction_data.get('type') != 'FeatureCollection':
+        return
+
+    features = prediction_data.get('features', [])
+    for feature in features:
+        props = feature['properties']
+        print('{} prediction updated at {}: {} ({}%)'.format(
+            props['type'],
+            iso8601.parse_date(props['last_updated']).strftime('%-I:%M%p'),
+            props['quality'],
+            props['quality_percent'],
+        ))
+
+print_prediction(prediction_response.json())
