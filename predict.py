@@ -34,11 +34,18 @@ authorization = get_authorization_from_fs()
 if authorization is None:
     authorization = get_authorization_from_login()
 
-prediction_response = requests.get(
-    'https://sunburst.sunsetwx.com/v1/quality',
-    params=dict(geo='43.2740851,-79.8994183'),
-    headers={'Authorization': authorization}
-)
+def get_prediction_response(authorization):
+    return requests.get(
+        'https://sunburst.sunsetwx.com/v1/quality',
+        params=dict(geo='43.2740851,-79.8994183'),
+        headers={'Authorization': authorization}
+    )
+
+prediction_response = get_prediction_response(authorization)
+if prediction_response.status_code != 200:
+    authorization = get_authorization_from_login()
+    prediction_response = get_prediction_response(authorization)
+
 
 def print_prediction(prediction_data):
     if prediction_data.get('type') != 'FeatureCollection':
